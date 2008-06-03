@@ -1,0 +1,42 @@
+1. Requirements
+---------------
+
+Before being able to build esp_edp.so you need libglib2.0-dev and
+wireshark-dev for wireshark-1.0. Also a recent version of gcc and make is
+required.
+
+2. Building
+-----------
+
+You can start build of esp_edp.so just by starting 
+
+$ make
+
+in the source directory. Please change WIRESHARK_INCLUDE_PATH and
+WIRESHARK_LIBRARY_PATH in Makefile if your wireshark development
+files can't be located in /usr/include/wireshark and /usr/include/wireshark.
+e.g. if you installed it in /opt/wireshark/include and /opt/wireshark/lib,
+please change it to
+
+WIRESHARK_INCLUDE_PATH = /opt/wireshark/include
+WIRESHARK_LIBRARY_PATH = /opt/wireshark/lib
+
+
+3. Installing
+-------------
+
+esp_edp.so can be installed by copying it to /usr/share/wireshark/plugins/
+or $HOME/.wireshark/plugins/. Installation in you home directory can be
+done by starting
+
+$ make install
+
+It's possible that you cannot use the plugin when you start wireshark as root.
+Try to change permissions of the plugin to 0600 and the owner to root
+
+$ chmod 0600 $HOME/.wireshark/plugins/esp_edp.so
+$ chmod root:root $HOME/.wireshark/plugins/esp_edp.so
+
+or try to enable suid for dumpcap and start it as normal user
+
+$ chmod +s `which dumpcap`

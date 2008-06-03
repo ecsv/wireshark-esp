@@ -1,4 +1,20 @@
-#include "dissector_esp_edp.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#include <epan/packet.h>
+#include <epan/prefs.h>
+#include <epan/tap.h>
+
+#ifndef ETHERTYPE_ETH_EDP
+#define ETHERTYPE_ETH_EDP            0x8889
+#endif
+
+/* forward reference */
+void proto_register_eth_edp();
+void proto_reg_handoff_eth_edp();
+
+extern int proto_eth_edp;
 
 /* UDP structs and definitions */
 typedef struct _e_eth_edphdr {

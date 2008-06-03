@@ -1,15 +1,20 @@
-SRCS = dissector_edp.c  dissector_esp.c  dissector_esp_edp.c
+WIRESHARK_INCLUDE_PATH = /usr/include/wireshark/
+WIRESHARK_LIBRARY_PATH = /usr/lib/wireshark/
+
+include Makefile.common
+
+SRCS = $(DISSECTOR_SRC) plugin.c
 
 OBJS = $(foreach src, $(SRCS), $(src:.c=.o))
 
-PLUGIN = packet-esp_edp.so
+PLUGIN = $(PLUGIN_NAME).so
 PLUGIN_DIR = $(HOME)/.wireshark/plugins
 PLUGIN_INSTALL = $(PLUGIN_DIR)/$(PLUGIN)
 
-WIRESHARK_FLAGS = -DHAVE_CONFIG_H -I/usr/include/wireshark
+WIRESHARK_FLAGS = -DHAVE_CONFIG_H -I$(WIRESHARK_INCLUDE_PATH)
 CFLAGS = -Wall $(WIRESHARK_FLAGS) `pkg-config --cflags glib-2.0`-fPIC -DPIC
 
-WIRESHARK_LDFLAGS = -L/usr/lib/wireshark -lwireshark
+WIRESHARK_LDFLAGS = -L$(WIRESHARK_LIBRARY_PATH) -lwireshark
 LDFLAGS = $(WIRESHARK_LDFLAGS) `pkg-config --libs glib-2.0` -Wl,--export-dynamic
 
 all: $(PLUGIN)
