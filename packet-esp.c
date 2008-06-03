@@ -1,3 +1,27 @@
+/* packet-bat-gw.c
+ * Routines for Ethernet Stream Protocol dissection
+ * Copyright 2008, Sven Eckelmann <sven.eckelmann@gmx.de>
+ *
+ * $Id: ab725b405c6163da07f60278df86e7cd1d32ef61 $
+ *
+ * Wireshark - Network traffic analyzer
+ * By Gerald Combs <gerald@wireshark.org>
+ * Copyright 1998 Gerald Combs
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -67,144 +91,87 @@ static dissector_handle_t data_handle;
 
 static gboolean try_heuristic_first = FALSE;
 
-static hf_register_info hf_eth_esp[] = {
-	{ &hf_eth_esp_dstport,
-		{ "Destination Port",
-			"eth_esp.dstport",
-			FT_UINT16,
-			BASE_DEC,
-			NULL,
-			0x0,
-			"",
-			HFILL }},
-	{ &hf_eth_esp_srcport,
-	  { "Source Port",
-	    "eth_esp.srcport",
-	    FT_UINT16,
-	    BASE_DEC,
-	    NULL,
-	    0x0,
-	    "",
-	    HFILL }},
-	{ &hf_eth_esp_pkt_seq,
-	  { "Sequence number",
-	    "eth_esp.seq",
-	    FT_UINT16,
-	    BASE_DEC,
-	    NULL,
-	    0x0,
-	    "",
-	    HFILL }},
-	{ &hf_eth_esp_ack_seq,
-	  { "Acknowledgement number",
-	    "eth_esp.ack",
-	    FT_UINT16,
-	    BASE_DEC,
-	    NULL,
-	    0x0,
-	    "",
-	    HFILL }},
-	{ &hf_eth_esp_len,
-	  { "Data Len",
-	    "eth_esp.len",
-	    FT_UINT16,
-	    BASE_DEC,
-	    NULL,
-	    0x0,
-	    "",
-	    HFILL}},
-	{ &hf_eth_esp_flags,
-	  { "Flags",
-	    "eth_esp.flags",
-	    FT_UINT8,
-	    BASE_HEX,
-	    NULL,
-	    0x0,
-	    "",
-	    HFILL }},
-	{ &hf_eth_esp_flags_syn,
-	  { "Syn",
-	    "eth_esp.flags.syn",
-	    FT_BOOLEAN,
-	    8,
-	    TFS(&flags_set_truth),
-	    EH_SYN,
-	    "",
-	    HFILL }},
-	{ &hf_eth_esp_flags_ack,
-	  { "Ack",
-	    "eth_esp.flags.ack",
-	    FT_BOOLEAN,
-	    8,
-	    TFS(&flags_set_truth),
-	    EH_ACK,
-	    "",
-	    HFILL }},
-	{ &hf_eth_esp_flags_fin,
-	  { "Fin",
-	    "eth_esp.flags.fin",
-	    FT_BOOLEAN,
-	    8,
-	    TFS(&flags_set_truth),
-	    EH_FIN,
-	    "",
-	    HFILL }},
-	{ &hf_eth_esp_flags_rst,
-	  { "Rst",
-	    "eth_esp.flags.rst",
-	    FT_BOOLEAN,
-	    8,
-	    TFS(&flags_set_truth),
-	    EH_RST,
-	    "",
-	    HFILL }},
-	{ &hf_eth_esp_flags_rrq,
-	  { "RRQ",
-	    "eth_esp.flags.rrq",
-	    FT_BOOLEAN,
-	    8,
-	    TFS(&flags_set_truth),
-	    EH_RRQ,
-	    "",
-	    HFILL }},
-	{ &hf_eth_esp_flags_txs,
-	  { "TXS",
-	    "eth_esp.flags.txs",
-	    FT_BOOLEAN,
-	    8,
-	    TFS(&flags_set_truth),
-	    EH_TXS,
-	    "",
-	    HFILL }},
-	{ &hf_eth_esp_flags_txf,
-	  { "TXF",
-	    "eth_esp.flags.txf",
-	    FT_BOOLEAN,
-	    8,
-	    TFS(&flags_set_truth),
-	    EH_TXF,
-	    "",
-	    HFILL }},
-	{ &hf_eth_esp_flags_xxx,
-	  { "XXX",
-	    "eth_esp.flags.xxx",
-	    FT_BOOLEAN,
-	    8,
-	    TFS(&flags_set_truth),
-	    EH_XXX,
-	    "",
-	    HFILL }}
-};
-
-/* Setup protocol subtree array */
-static gint *ett[] = {
-	&ett_eth_esp,
-	&ett_eth_esp_flags
-};
-
 void
 proto_register_eth_esp(void)
 {
+	static hf_register_info hf_eth_esp[] = {
+		{ &hf_eth_esp_dstport,
+			{ "Destination Port", "eth_esp.dstport",
+				FT_UINT16, BASE_DEC, NULL, 0x0,
+				"", HFILL }},
+		{ &hf_eth_esp_srcport,
+		  { "Source Port", "eth_esp.srcport",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_pkt_seq,
+		  { "Sequence number", "eth_esp.seq",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_ack_seq,
+		  { "Acknowledgement number", "eth_esp.ack",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_len,
+		  { "Data Len", "eth_esp.len",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+		    "", HFILL}
+		},
+		{ &hf_eth_esp_flags,
+		  { "Flags", "eth_esp.flags",
+		    FT_UINT8, BASE_HEX, NULL, 0x0,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_syn,
+		  { "Syn", "eth_esp.flags.syn",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_SYN,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_ack,
+		  { "Ack", "eth_esp.flags.ack",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_ACK,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_fin,
+		  { "Fin", "eth_esp.flags.fin",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_FIN,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_rst,
+		  { "Rst", "eth_esp.flags.rst",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_RST,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_rrq,
+		  { "RRQ", "eth_esp.flags.rrq",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_RRQ,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_txs,
+		  { "TXS", "eth_esp.flags.txs",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_TXS,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_txf,
+		  { "TXF", "eth_esp.flags.txf",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_TXF,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_xxx,
+		  { "XXX", "eth_esp.flags.xxx",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_XXX,
+		    "", HFILL }
+		}
+	};
+
+	/* Setup protocol subtree array */
+	static gint *ett[] = {
+		&ett_eth_esp,
+		&ett_eth_esp_flags
+	};
+
 	if (proto_eth_esp == -1) {
 		module_t *eth_esp_module;
 		proto_eth_esp = proto_register_protocol(
@@ -213,6 +180,7 @@ proto_register_eth_esp(void)
 		                        "eth_esp"           /* abbrev */
 		                );
 		proto_register_subtree_array(ett, array_length(ett));
+		proto_register_field_array(proto_eth_esp, hf_eth_esp, array_length(hf_eth_esp));
 
 		/* Register configuration preferences */
 		eth_esp_module = prefs_register_protocol(proto_eth_esp, NULL);
@@ -221,18 +189,21 @@ proto_register_eth_esp(void)
 		                               "Try to decode a packet using an heuristic sub-dissector before using a data-dissector",
 		                               &try_heuristic_first);
 	}
-
-	register_heur_dissector_list("eth_esp", &heur_subdissector_list);
 }
 
 void proto_reg_handoff_eth_esp(void)
 {
-	eth_esp_handle = create_dissector_handle(dissect_eth_esp, proto_eth_esp);
-	dissector_add("ethertype", ETHERTYPE_ETH_ESP, eth_esp_handle);
-	proto_register_field_array(proto_eth_esp, hf_eth_esp, array_length(hf_eth_esp));
-	data_handle = find_dissector("data");
-	eth_esp_tap = register_tap("eth_esp");
-	eth_esp_follow_tap = register_tap("eth_esp_follow");
+	static gboolean inited = FALSE;
+
+	if (!inited) {
+		eth_esp_handle = create_dissector_handle(dissect_eth_esp, proto_eth_esp);
+		dissector_add("ethertype", ETHERTYPE_ETH_ESP, eth_esp_handle);
+		register_heur_dissector_list("eth_esp", &heur_subdissector_list);
+
+		data_handle = find_dissector("data");
+		eth_esp_tap = register_tap("eth_esp");
+		eth_esp_follow_tap = register_tap("eth_esp_follow");
+	}
 }
 
 void dissect_eth_esp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
@@ -274,33 +245,22 @@ void dissect_eth_esp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 
 		ti = proto_tree_add_item(tree, proto_eth_esp, tvb, 0, -1, FALSE);
 		eth_esp_tree = proto_item_add_subtree(ti, ett_eth_esp);
-		proto_tree_add_uint_format(eth_esp_tree, hf_eth_esp_dstport, tvb, offset, 2, eth_esph->eh_dport,
-		                           "Destination port: %u", eth_esph->eh_dport);
-		proto_tree_add_uint_hidden(eth_esp_tree, hf_eth_esp_dstport, tvb, offset, 2, eth_esph->eh_dport);
+		proto_tree_add_item(eth_esp_tree, hf_eth_esp_dstport, tvb, offset, 2, FALSE);
 		offset += 2;
 
-		proto_tree_add_uint_format(eth_esp_tree, hf_eth_esp_srcport, tvb, offset, 2, eth_esph->eh_sport,
-		                           "Source port: %u", eth_esph->eh_sport);
-		proto_tree_add_uint_hidden(eth_esp_tree, hf_eth_esp_srcport, tvb, offset, 2, eth_esph->eh_sport);
+		proto_tree_add_item(eth_esp_tree, hf_eth_esp_srcport, tvb, offset, 2, FALSE);
 		offset += 2;
 
-		proto_tree_add_uint_format(eth_esp_tree, hf_eth_esp_srcport, tvb, offset, 2, eth_esph->eh_pkt_seq,
-		                           "Sequence number: %u", eth_esph->eh_pkt_seq);
-		proto_tree_add_uint_hidden(eth_esp_tree, hf_eth_esp_srcport, tvb, offset, 2, eth_esph->eh_pkt_seq);
+		proto_tree_add_item(eth_esp_tree, hf_eth_esp_srcport, tvb, offset, 2, FALSE);
 		offset += 2;
 
-		proto_tree_add_uint_format(eth_esp_tree, hf_eth_esp_srcport, tvb, offset, 2, eth_esph->eh_pkt_seq,
-		                           "Acknowledgement number: %u", eth_esph->eh_ack_seq);
-		proto_tree_add_uint_hidden(eth_esp_tree, hf_eth_esp_srcport, tvb, offset, 2, eth_esph->eh_ack_seq);
+		proto_tree_add_item(eth_esp_tree, hf_eth_esp_srcport, tvb, offset, 2, FALSE);
 		offset += 2;
 
-		proto_tree_add_uint_format(eth_esp_tree, hf_eth_esp_len, tvb, offset, 2, eth_esph->eh_len,
-		                           "Length: %u", eth_esph->eh_len);
-		proto_tree_add_uint_hidden(eth_esp_tree, hf_eth_esp_len, tvb, offset, 2, eth_esph->eh_len);
+		proto_tree_add_item(eth_esp_tree, hf_eth_esp_len, tvb, offset, 2, FALSE);
 		offset += 2;
 
-		tf = proto_tree_add_uint_format(eth_esp_tree, hf_eth_esp_flags, tvb, offset, 1,
-		                                eth_esph->eh_flags, "Flags: 0x%02x", eth_esph->eh_flags);
+		tf = proto_tree_add_item(eth_esp_tree, hf_eth_esp_flags, tvb, offset, 1, FALSE);
 
 		field_tree = proto_item_add_subtree(tf, ett_eth_esp_flags);
 		proto_tree_add_boolean(field_tree, hf_eth_esp_flags_syn, tvb, offset, 1, eth_esph->eh_flags);

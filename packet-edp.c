@@ -1,3 +1,27 @@
+/* packet-bat-gw.c
+ * Routines for Ethernet Datagram Protocol dissection
+ * Copyright 2008, Sven Eckelmann <sven.eckelmann@gmx.de>
+ *
+ * $Id: ab725b405c6163da07f60278df86e7cd1d32ef61 $
+ *
+ * Wireshark - Network traffic analyzer
+ * By Gerald Combs <gerald@wireshark.org>
+ * Copyright 1998 Gerald Combs
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -51,53 +75,37 @@ static const value_string packettypenames[] = {
 	{ 4, NULL }
 };
 
-static hf_register_info hf_eth_edp[] = {
-	{ &hf_eth_edp_dstport,
-		{ "Destination Port",
-			"eth_edp.dstport",
-			FT_UINT16,
-			BASE_DEC,
-			NULL,
-			0x0,
-			"",
-			HFILL }},
-	{ &hf_eth_edp_srcport,
-	  { "Source Port",
-	    "eth_edp.srcport",
-	    FT_UINT16,
-	    BASE_DEC,
-	    NULL,
-	    0x0,
-	    "",
-	    HFILL }},
-	{ &hf_eth_edp_len,
-	  { "Data Len",
-	    "eth_edp.len",
-	    FT_UINT16,
-	    BASE_DEC,
-	    NULL,
-	    0x0,
-	    "",
-	    HFILL}},
-	{ &hf_eth_edp_ctype,
-	  { "CType",
-	    "eth_edp.ctype",
-	    FT_UINT8,
-	    BASE_DEC,
-	    VALS(packettypenames),
-	    0x0,
-	    "",
-	    HFILL}}
-};
-
-/* Setup protocol subtree array */
-static gint *ett[] = {
-	&ett_eth_edp
-};
-
 void
 proto_register_eth_edp(void)
 {
+	static hf_register_info hf_eth_edp[] = {
+		{ &hf_eth_edp_dstport,
+			{ "Destination Port", "eth_edp.dstport",
+				FT_UINT16, BASE_DEC, NULL, 0x0,
+				"", HFILL }
+		},
+		{ &hf_eth_edp_srcport,
+		  { "Source Port", "eth_edp.srcport",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+		    "", HFILL }
+		},
+		{ &hf_eth_edp_len,
+		  { "Data Len", "eth_edp.len",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+		    "", HFILL}
+		},
+		{ &hf_eth_edp_ctype,
+		  { "CType", "eth_edp.ctype",
+		    FT_UINT8, BASE_DEC, VALS(packettypenames), 0x0,
+		    "", HFILL}
+		}
+	};
+
+	/* Setup protocol subtree array */
+	static gint *ett[] = {
+		&ett_eth_edp
+	};
+
 	if (proto_eth_edp == -1) {
 		module_t *eth_edp_module;
 		proto_eth_edp = proto_register_protocol(
@@ -106,6 +114,7 @@ proto_register_eth_edp(void)
 		                        "eth_edp"           /* abbrev */
 		                );
 		proto_register_subtree_array(ett, array_length(ett));
+		proto_register_field_array(proto_eth_edp, hf_eth_edp, array_length(hf_eth_edp));
 
 		/* Register configuration preferences */
 		eth_edp_module = prefs_register_protocol(proto_eth_edp, NULL);
@@ -114,18 +123,21 @@ proto_register_eth_edp(void)
 		                               "Try to decode a packet using an heuristic sub-dissector before using a data-dissector",
 		                               &try_heuristic_first);
 	}
-
-	register_heur_dissector_list("eth_edp", &heur_subdissector_list);
 }
 
 void proto_reg_handoff_eth_edp(void)
 {
-	eth_edp_handle = create_dissector_handle(dissect_eth_edp, proto_eth_edp);
-	dissector_add("ethertype", ETHERTYPE_ETH_EDP, eth_edp_handle);
-	proto_register_field_array(proto_eth_edp, hf_eth_edp, array_length(hf_eth_edp));
-	data_handle = find_dissector("data");
-	eth_edp_tap = register_tap("eth_edp");
-	eth_edp_follow_tap = register_tap("eth_edp_follow");
+	static gboolean inited = FALSE;
+
+	if (!inited) {
+		eth_edp_handle = create_dissector_handle(dissect_eth_edp, proto_eth_edp);
+		dissector_add("ethertype", ETHERTYPE_ETH_EDP, eth_edp_handle);
+		register_heur_dissector_list("eth_edp", &heur_subdissector_list);
+
+		data_handle = find_dissector("data");
+		eth_edp_tap = register_tap("eth_edp");
+		eth_edp_follow_tap = register_tap("eth_edp_follow");
+	}
 }
 
 void dissect_eth_edp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
@@ -170,19 +182,13 @@ void dissect_eth_edp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 
 		ti = proto_tree_add_item(tree, proto_eth_edp, tvb, 0, -1, FALSE);
 		eth_edp_tree = proto_item_add_subtree(ti, ett_eth_edp);
-		proto_tree_add_uint_format(eth_edp_tree, hf_eth_edp_dstport, tvb, offset, 2, eth_edph->eh_dport,
-		                           "Destination port: %u", eth_edph->eh_dport);
-		proto_tree_add_uint_hidden(eth_edp_tree, hf_eth_edp_dstport, tvb, offset, 2, eth_edph->eh_dport);
+		proto_tree_add_item(eth_edp_tree, hf_eth_edp_dstport, tvb, offset, 2, FALSE);
 		offset += 2;
 
-		proto_tree_add_uint_format(eth_edp_tree, hf_eth_edp_srcport, tvb, offset, 2, eth_edph->eh_sport,
-		                           "Source port: %u", eth_edph->eh_sport);
-		proto_tree_add_uint_hidden(eth_edp_tree, hf_eth_edp_srcport, tvb, offset, 2, eth_edph->eh_sport);
+		proto_tree_add_item(eth_edp_tree, hf_eth_edp_srcport, tvb, offset, 2, FALSE);
 		offset += 2;
 
-		proto_tree_add_uint_format(eth_edp_tree, hf_eth_edp_len, tvb, offset, 2, eth_edph->eh_len,
-		                           "Length: %u", eth_edph->eh_len);
-		proto_tree_add_uint_hidden(eth_edp_tree, hf_eth_edp_len, tvb, offset, 2, eth_edph->eh_len);
+		proto_tree_add_item(eth_edp_tree, hf_eth_edp_len, tvb, offset, 2, FALSE);
 		offset += 2;
 
 		if (eth_edph->eh_dport == 0 || eth_edph->eh_sport == 0) {
@@ -190,7 +196,6 @@ void dissect_eth_edp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 			proto_tree_add_uint_format(eth_edp_tree, hf_eth_edp_ctype, tvb, offset, 1, ctype,
 			                           "CType: %s (%u)",
 			                           val_to_str(ctype, packettypenames, "Unknown (0x%02x)"), ctype);
-			proto_tree_add_uint_hidden(eth_edp_tree, hf_eth_edp_ctype, tvb, offset, 1, ctype);
 			offset += 1;
 		}
 	}
