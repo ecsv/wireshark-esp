@@ -292,7 +292,7 @@ void dissect_eth_esp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 	}
 
 	if (check_col(pinfo->cinfo, COL_INFO)) {
-		col_append_fstr(pinfo->cinfo, COL_INFO, " [%s] Seq=%u Ack=%u", flags, eth_esph->eh_pkt_seq, eth_esph->eh_ack_seq);
+		col_append_fstr(pinfo->cinfo, COL_INFO, "[%s] Seq=%u Ack=%u", flags, eth_esph->eh_pkt_seq, eth_esph->eh_ack_seq);
 	}
 
 	pinfo->srcport = eth_esph->eh_sport;
