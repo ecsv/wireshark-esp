@@ -137,6 +137,8 @@ void proto_reg_handoff_eth_edp(void)
 		data_handle = find_dissector("data");
 		eth_edp_tap = register_tap("eth_edp");
 		eth_edp_follow_tap = register_tap("eth_edp_follow");
+
+		inited = TRUE;
 	}
 }
 

@@ -203,6 +203,8 @@ void proto_reg_handoff_eth_esp(void)
 		data_handle = find_dissector("data");
 		eth_esp_tap = register_tap("eth_esp");
 		eth_esp_follow_tap = register_tap("eth_esp_follow");
+
+		inited = TRUE;
 	}
 }
 
