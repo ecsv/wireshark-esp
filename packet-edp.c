@@ -72,7 +72,7 @@ static const value_string packettypenames[] = {
 	{ 1, "EDP_ECHO_REQUEST" },
 	{ 2, "EDP_ECHO_REPLY" },
 	{ 3, "EDP_CMSG_END" },
-	{ 4, NULL }
+	{ 0, NULL }
 };
 
 void
