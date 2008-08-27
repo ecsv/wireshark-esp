@@ -217,7 +217,7 @@ void dissect_eth_edp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 	}
 
 	if (len != 0) {
-		next_tvb = tvb_new_subset(tvb, offset, len, len);
+		next_tvb = tvb_new_subset(tvb, offset, len, -1);
 
 		if (have_tap_listener(eth_edp_follow_tap)) {
 			tap_queue_packet(eth_edp_follow_tap, pinfo, next_tvb);
