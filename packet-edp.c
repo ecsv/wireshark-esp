@@ -35,8 +35,8 @@
 #endif
 
 /* forward reference */
-void proto_register_eth_edp();
-void proto_reg_handoff_eth_edp();
+void proto_register_eth_edp(void);
+void proto_reg_handoff_eth_edp(void);
 
 extern int proto_eth_edp;
 

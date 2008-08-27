@@ -44,8 +44,8 @@
 #define EH_XXX  0x80
 
 /* forward reference */
-void proto_register_eth_esp();
-void proto_reg_handoff_eth_esp();
+void proto_register_eth_esp(void);
+void proto_reg_handoff_eth_esp(void);
 
 extern int proto_eth_esp;
 
