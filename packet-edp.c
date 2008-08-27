@@ -80,9 +80,9 @@ proto_register_eth_edp(void)
 {
 	static hf_register_info hf_eth_edp[] = {
 		{ &hf_eth_edp_dstport,
-			{ "Destination Port", "eth_edp.dstport",
-				FT_UINT16, BASE_DEC, NULL, 0x0,
-				"", HFILL }
+		  { "Destination Port", "eth_edp.dstport",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+		    "", HFILL }
 		},
 		{ &hf_eth_edp_srcport,
 		  { "Source Port", "eth_edp.srcport",
