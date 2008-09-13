@@ -2,7 +2,7 @@
  * Routines for Ethernet Stream Protocol dissection
  * Copyright 2008, Sven Eckelmann <sven.eckelmann@gmx.de>
  *
- * $Id: ab725b405c6163da07f60278df86e7cd1d32ef61 $
+ * $Id$
  *
  * Wireshark - Network traffic analyzer
  * By Gerald Combs <gerald@wireshark.org>
