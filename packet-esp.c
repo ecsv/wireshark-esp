@@ -91,123 +91,6 @@ static dissector_handle_t data_handle;
 
 static gboolean try_heuristic_first = FALSE;
 
-void
-proto_register_eth_esp(void)
-{
-	static hf_register_info hf_eth_esp[] = {
-		{ &hf_eth_esp_dstport,
-		  { "Destination Port", "eth_esp.dstport",
-		    FT_UINT16, BASE_DEC, NULL, 0x0,
-		    "", HFILL }},
-		{ &hf_eth_esp_srcport,
-		  { "Source Port", "eth_esp.srcport",
-		    FT_UINT16, BASE_DEC, NULL, 0x0,
-		    "", HFILL }
-		},
-		{ &hf_eth_esp_pkt_seq,
-		  { "Sequence number", "eth_esp.seq",
-		    FT_UINT16, BASE_DEC, NULL, 0x0,
-		    "", HFILL }
-		},
-		{ &hf_eth_esp_ack_seq,
-		  { "Acknowledgement number", "eth_esp.ack",
-		    FT_UINT16, BASE_DEC, NULL, 0x0,
-		    "", HFILL }
-		},
-		{ &hf_eth_esp_len,
-		  { "Data Len", "eth_esp.len",
-		    FT_UINT16, BASE_DEC, NULL, 0x0,
-		    "", HFILL}
-		},
-		{ &hf_eth_esp_flags,
-		  { "Flags", "eth_esp.flags",
-		    FT_UINT8, BASE_HEX, NULL, 0x0,
-		    "", HFILL }
-		},
-		{ &hf_eth_esp_flags_syn,
-		  { "Syn", "eth_esp.flags.syn",
-		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_SYN,
-		    "", HFILL }
-		},
-		{ &hf_eth_esp_flags_ack,
-		  { "Ack", "eth_esp.flags.ack",
-		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_ACK,
-		    "", HFILL }
-		},
-		{ &hf_eth_esp_flags_fin,
-		  { "Fin", "eth_esp.flags.fin",
-		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_FIN,
-		    "", HFILL }
-		},
-		{ &hf_eth_esp_flags_rst,
-		  { "Rst", "eth_esp.flags.rst",
-		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_RST,
-		    "", HFILL }
-		},
-		{ &hf_eth_esp_flags_rrq,
-		  { "RRQ", "eth_esp.flags.rrq",
-		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_RRQ,
-		    "", HFILL }
-		},
-		{ &hf_eth_esp_flags_txs,
-		  { "TXS", "eth_esp.flags.txs",
-		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_TXS,
-		    "", HFILL }
-		},
-		{ &hf_eth_esp_flags_txf,
-		  { "TXF", "eth_esp.flags.txf",
-		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_TXF,
-		    "", HFILL }
-		},
-		{ &hf_eth_esp_flags_xxx,
-		  { "XXX", "eth_esp.flags.xxx",
-		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_XXX,
-		    "", HFILL }
-		}
-	};
-
-	/* Setup protocol subtree array */
-	static gint *ett[] = {
-		&ett_eth_esp,
-		&ett_eth_esp_flags
-	};
-
-	if (proto_eth_esp == -1) {
-		module_t *eth_esp_module;
-		proto_eth_esp = proto_register_protocol(
-		                        "Ethernet Stream Protocol",
-		                        "ETH_ESP",          /* short name */
-		                        "eth_esp"           /* abbrev */
-		                );
-		proto_register_subtree_array(ett, array_length(ett));
-		proto_register_field_array(proto_eth_esp, hf_eth_esp, array_length(hf_eth_esp));
-
-		/* Register configuration preferences */
-		eth_esp_module = prefs_register_protocol(proto_eth_esp, NULL);
-		prefs_register_bool_preference(eth_esp_module, "try_heuristic_first",
-		                               "Try heuristic sub-dissectors first",
-		                               "Try to decode a packet using an heuristic sub-dissector before using a data-dissector",
-		                               &try_heuristic_first);
-	}
-}
-
-void proto_reg_handoff_eth_esp(void)
-{
-	static gboolean inited = FALSE;
-
-	if (!inited) {
-		eth_esp_handle = create_dissector_handle(dissect_eth_esp, proto_eth_esp);
-		dissector_add("ethertype", ETHERTYPE_ETH_ESP, eth_esp_handle);
-		register_heur_dissector_list("eth_esp", &heur_subdissector_list);
-
-		data_handle = find_dissector("data");
-		eth_esp_tap = register_tap("eth_esp");
-		eth_esp_follow_tap = register_tap("eth_esp_follow");
-
-		inited = TRUE;
-	}
-}
-
 void dissect_eth_esp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 {
 	e_eth_esphdr *eth_esph;
@@ -323,5 +206,121 @@ void dissect_eth_esp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 		}
 
 		call_dissector(data_handle, next_tvb, pinfo, tree);
+	}
+}
+
+void proto_register_eth_esp(void)
+{
+	static hf_register_info hf_eth_esp[] = {
+		{ &hf_eth_esp_dstport,
+		  { "Destination Port", "eth_esp.dstport",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+		    "", HFILL }},
+		{ &hf_eth_esp_srcport,
+		  { "Source Port", "eth_esp.srcport",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_pkt_seq,
+		  { "Sequence number", "eth_esp.seq",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_ack_seq,
+		  { "Acknowledgement number", "eth_esp.ack",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_len,
+		  { "Data Len", "eth_esp.len",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+		    "", HFILL}
+		},
+		{ &hf_eth_esp_flags,
+		  { "Flags", "eth_esp.flags",
+		    FT_UINT8, BASE_HEX, NULL, 0x0,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_syn,
+		  { "Syn", "eth_esp.flags.syn",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_SYN,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_ack,
+		  { "Ack", "eth_esp.flags.ack",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_ACK,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_fin,
+		  { "Fin", "eth_esp.flags.fin",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_FIN,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_rst,
+		  { "Rst", "eth_esp.flags.rst",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_RST,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_rrq,
+		  { "RRQ", "eth_esp.flags.rrq",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_RRQ,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_txs,
+		  { "TXS", "eth_esp.flags.txs",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_TXS,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_txf,
+		  { "TXF", "eth_esp.flags.txf",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_TXF,
+		    "", HFILL }
+		},
+		{ &hf_eth_esp_flags_xxx,
+		  { "XXX", "eth_esp.flags.xxx",
+		    FT_BOOLEAN, 8, TFS(&flags_set_truth), EH_XXX,
+		    "", HFILL }
+		}
+	};
+
+	/* Setup protocol subtree array */
+	static gint *ett[] = {
+		&ett_eth_esp,
+		&ett_eth_esp_flags
+	};
+
+	if (proto_eth_esp == -1) {
+		module_t *eth_esp_module;
+		proto_eth_esp = proto_register_protocol(
+		                        "Ethernet Stream Protocol",
+		                        "ETH_ESP",          /* short name */
+		                        "eth_esp"           /* abbrev */
+		                );
+		proto_register_subtree_array(ett, array_length(ett));
+		proto_register_field_array(proto_eth_esp, hf_eth_esp, array_length(hf_eth_esp));
+
+		/* Register configuration preferences */
+		eth_esp_module = prefs_register_protocol(proto_eth_esp, NULL);
+		prefs_register_bool_preference(eth_esp_module, "try_heuristic_first",
+		                               "Try heuristic sub-dissectors first",
+		                               "Try to decode a packet using an heuristic sub-dissector before using a data-dissector",
+		                               &try_heuristic_first);
+	}
+}
+
+void proto_reg_handoff_eth_esp(void)
+{
+	static gboolean inited = FALSE;
+
+	if (!inited) {
+		eth_esp_handle = create_dissector_handle(dissect_eth_esp, proto_eth_esp);
+		dissector_add("ethertype", ETHERTYPE_ETH_ESP, eth_esp_handle);
+		register_heur_dissector_list("eth_esp", &heur_subdissector_list);
+
+		data_handle = find_dissector("data");
+		eth_esp_tap = register_tap("eth_esp");
+		eth_esp_follow_tap = register_tap("eth_esp_follow");
+
+		inited = TRUE;
 	}
 }

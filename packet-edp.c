@@ -75,73 +75,6 @@ static const value_string packettypenames[] = {
 	{ 0, NULL }
 };
 
-void
-proto_register_eth_edp(void)
-{
-	static hf_register_info hf_eth_edp[] = {
-		{ &hf_eth_edp_dstport,
-		  { "Destination Port", "eth_edp.dstport",
-		    FT_UINT16, BASE_DEC, NULL, 0x0,
-		    "", HFILL }
-		},
-		{ &hf_eth_edp_srcport,
-		  { "Source Port", "eth_edp.srcport",
-		    FT_UINT16, BASE_DEC, NULL, 0x0,
-		    "", HFILL }
-		},
-		{ &hf_eth_edp_len,
-		  { "Data Len", "eth_edp.len",
-		    FT_UINT16, BASE_DEC, NULL, 0x0,
-		    "", HFILL}
-		},
-		{ &hf_eth_edp_ctype,
-		  { "CType", "eth_edp.ctype",
-		    FT_UINT8, BASE_DEC, VALS(packettypenames), 0x0,
-		    "", HFILL}
-		}
-	};
-
-	/* Setup protocol subtree array */
-	static gint *ett[] = {
-		&ett_eth_edp
-	};
-
-	if (proto_eth_edp == -1) {
-		module_t *eth_edp_module;
-		proto_eth_edp = proto_register_protocol(
-		                        "Ethernet Datagram Protocol",
-		                        "ETH_EDP",          /* short name */
-		                        "eth_edp"           /* abbrev */
-		                );
-		proto_register_subtree_array(ett, array_length(ett));
-		proto_register_field_array(proto_eth_edp, hf_eth_edp, array_length(hf_eth_edp));
-
-		/* Register configuration preferences */
-		eth_edp_module = prefs_register_protocol(proto_eth_edp, NULL);
-		prefs_register_bool_preference(eth_edp_module, "try_heuristic_first",
-		                               "Try heuristic sub-dissectors first",
-		                               "Try to decode a packet using an heuristic sub-dissector before using a data-dissector",
-		                               &try_heuristic_first);
-	}
-}
-
-void proto_reg_handoff_eth_edp(void)
-{
-	static gboolean inited = FALSE;
-
-	if (!inited) {
-		eth_edp_handle = create_dissector_handle(dissect_eth_edp, proto_eth_edp);
-		dissector_add("ethertype", ETHERTYPE_ETH_EDP, eth_edp_handle);
-		register_heur_dissector_list("eth_edp", &heur_subdissector_list);
-
-		data_handle = find_dissector("data");
-		eth_edp_tap = register_tap("eth_edp");
-		eth_edp_follow_tap = register_tap("eth_edp_follow");
-
-		inited = TRUE;
-	}
-}
-
 void dissect_eth_edp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 {
 	e_eth_edphdr *eth_edph;
@@ -230,5 +163,71 @@ void dissect_eth_edp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 		}
 
 		call_dissector(data_handle, next_tvb, pinfo, tree);
+	}
+}
+
+void proto_register_eth_edp(void)
+{
+	static hf_register_info hf_eth_edp[] = {
+		{ &hf_eth_edp_dstport,
+		  { "Destination Port", "eth_edp.dstport",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+		    "", HFILL }
+		},
+		{ &hf_eth_edp_srcport,
+		  { "Source Port", "eth_edp.srcport",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+		    "", HFILL }
+		},
+		{ &hf_eth_edp_len,
+		  { "Data Len", "eth_edp.len",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+		    "", HFILL}
+		},
+		{ &hf_eth_edp_ctype,
+		  { "CType", "eth_edp.ctype",
+		    FT_UINT8, BASE_DEC, VALS(packettypenames), 0x0,
+		    "", HFILL}
+		}
+	};
+
+	/* Setup protocol subtree array */
+	static gint *ett[] = {
+		&ett_eth_edp
+	};
+
+	if (proto_eth_edp == -1) {
+		module_t *eth_edp_module;
+		proto_eth_edp = proto_register_protocol(
+		                        "Ethernet Datagram Protocol",
+		                        "ETH_EDP",          /* short name */
+		                        "eth_edp"           /* abbrev */
+		                );
+		proto_register_subtree_array(ett, array_length(ett));
+		proto_register_field_array(proto_eth_edp, hf_eth_edp, array_length(hf_eth_edp));
+
+		/* Register configuration preferences */
+		eth_edp_module = prefs_register_protocol(proto_eth_edp, NULL);
+		prefs_register_bool_preference(eth_edp_module, "try_heuristic_first",
+		                               "Try heuristic sub-dissectors first",
+		                               "Try to decode a packet using an heuristic sub-dissector before using a data-dissector",
+		                               &try_heuristic_first);
+	}
+}
+
+void proto_reg_handoff_eth_edp(void)
+{
+	static gboolean inited = FALSE;
+
+	if (!inited) {
+		eth_edp_handle = create_dissector_handle(dissect_eth_edp, proto_eth_edp);
+		dissector_add("ethertype", ETHERTYPE_ETH_EDP, eth_edp_handle);
+		register_heur_dissector_list("eth_edp", &heur_subdissector_list);
+
+		data_handle = find_dissector("data");
+		eth_edp_tap = register_tap("eth_edp");
+		eth_edp_follow_tap = register_tap("eth_edp_follow");
+
+		inited = TRUE;
 	}
 }
