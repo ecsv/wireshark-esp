@@ -22,6 +22,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -34,22 +35,7 @@
 #define ETHERTYPE_ETH_ESP            0x8887
 #endif
 
-#define EH_SYN  0x01
-#define EH_ACK  0x02
-#define EH_FIN  0x04
-#define EH_RST  0x08
-#define EH_RRQ  0x10
-#define EH_TXS  0x20
-#define EH_TXF  0x40
-#define EH_XXX  0x80
-
-/* forward reference */
-void proto_register_eth_esp(void);
-void proto_reg_handoff_eth_esp(void);
-
-extern int proto_eth_esp;
-
-/* UDP structs and definitions */
+/* ESP structs and definitions */
 typedef struct _e_eth_esphdr {
 	guint16 eh_dport;   /**< esp destination port */
 	guint16 eh_sport;   /**< esp source port */
@@ -59,25 +45,33 @@ typedef struct _e_eth_esphdr {
 	guint8 eh_flags;    /**< esp flags */
 } e_eth_esphdr;
 
-void dissect_eth_esp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree);
+#define EH_SYN  0x01
+#define EH_ACK  0x02
+#define EH_FIN  0x04
+#define EH_RST  0x08
+#define EH_RRQ  0x10
+#define EH_TXS  0x20
+#define EH_TXF  0x40
+#define EH_XXX  0x80
 
-int proto_eth_esp = -1;
-static dissector_handle_t eth_esp_handle;
-
-static int eth_esp_tap = -1;
-static int eth_esp_follow_tap = -1;
-
-static heur_dissector_list_t heur_subdissector_list;
-
+/* trees */
 static gint ett_eth_esp = -1;
 static gint ett_eth_esp_flags = -1;
 
+/* hfs */
 static int hf_eth_esp_dstport = -1;
 static int hf_eth_esp_srcport = -1;
 static int hf_eth_esp_pkt_seq = -1;
 static int hf_eth_esp_ack_seq = -1;
 static int hf_eth_esp_len = -1;
 static int hf_eth_esp_flags = -1;
+
+/* forward reference */
+void proto_register_eth_esp(void);
+void proto_reg_handoff_eth_esp(void);
+static dissector_handle_t eth_esp_handle;
+
+/* flags */
 static int hf_eth_esp_flags_syn = -1;
 static int hf_eth_esp_flags_ack = -1;
 static int hf_eth_esp_flags_fin = -1;
@@ -87,11 +81,22 @@ static int hf_eth_esp_flags_txs = -1;
 static int hf_eth_esp_flags_txf = -1;
 static int hf_eth_esp_flags_xxx = -1;
 
+/* supported packet dissectors */
+static void dissect_eth_esp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree);
+
+/* other dissectors */
+static int proto_eth_esp_plugin = -1;
+
 static dissector_handle_t data_handle;
 
+/* tap */
+static int eth_esp_tap = -1;
+static int eth_esp_follow_tap = -1;
+
+static heur_dissector_list_t heur_subdissector_list;
 static gboolean try_heuristic_first = FALSE;
 
-void dissect_eth_esp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
+static void dissect_eth_esp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 {
 	e_eth_esphdr *eth_esph;
 	tvbuff_t *next_tvb;
@@ -128,8 +133,10 @@ void dissect_eth_esp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 		proto_item *ti = NULL, *tf;
 		proto_tree *eth_esp_tree = NULL, *field_tree = NULL;
 
-		ti = proto_tree_add_item(tree, proto_eth_esp, tvb, 0, -1, FALSE);
+		ti = proto_tree_add_item(tree, proto_eth_esp_plugin, tvb, 0, -1, FALSE);
 		eth_esp_tree = proto_item_add_subtree(ti, ett_eth_esp);
+
+		/* items */
 		proto_tree_add_item(eth_esp_tree, hf_eth_esp_dstport, tvb, offset, 2, FALSE);
 		offset += 2;
 
@@ -289,23 +296,21 @@ void proto_register_eth_esp(void)
 		&ett_eth_esp_flags
 	};
 
-	if (proto_eth_esp == -1) {
-		module_t *eth_esp_module;
-		proto_eth_esp = proto_register_protocol(
-		                        "Ethernet Stream Protocol",
-		                        "ETH_ESP",          /* short name */
-		                        "eth_esp"           /* abbrev */
-		                );
-		proto_register_subtree_array(ett, array_length(ett));
-		proto_register_field_array(proto_eth_esp, hf_eth_esp, array_length(hf_eth_esp));
+	module_t *eth_esp_module;
+	proto_eth_esp_plugin = proto_register_protocol(
+	                        "Ethernet Stream Protocol",
+	                        "ETH_ESP",          /* short name */
+	                        "eth_esp"           /* abbrev */
+	                );
+	proto_register_subtree_array(ett, array_length(ett));
+	proto_register_field_array(proto_eth_esp_plugin, hf_eth_esp, array_length(hf_eth_esp));
 
-		/* Register configuration preferences */
-		eth_esp_module = prefs_register_protocol(proto_eth_esp, NULL);
-		prefs_register_bool_preference(eth_esp_module, "try_heuristic_first",
-		                               "Try heuristic sub-dissectors first",
-		                               "Try to decode a packet using an heuristic sub-dissector before using a data-dissector",
-		                               &try_heuristic_first);
-	}
+	/* Register configuration preferences */
+	eth_esp_module = prefs_register_protocol(proto_eth_esp_plugin, NULL);
+	prefs_register_bool_preference(eth_esp_module, "try_heuristic_first",
+	                               "Try heuristic sub-dissectors first",
+	                               "Try to decode a packet using an heuristic sub-dissector before using a data-dissector",
+	                               &try_heuristic_first);
 }
 
 void proto_reg_handoff_eth_esp(void)
@@ -313,13 +318,16 @@ void proto_reg_handoff_eth_esp(void)
 	static gboolean inited = FALSE;
 
 	if (!inited) {
-		eth_esp_handle = create_dissector_handle(dissect_eth_esp, proto_eth_esp);
-		dissector_add("ethertype", ETHERTYPE_ETH_ESP, eth_esp_handle);
-		register_heur_dissector_list("eth_esp", &heur_subdissector_list);
+		eth_esp_handle = create_dissector_handle(dissect_eth_esp, proto_eth_esp_plugin);
 
 		data_handle = find_dissector("data");
+
 		eth_esp_tap = register_tap("eth_esp");
 		eth_esp_follow_tap = register_tap("eth_esp_follow");
+
+		register_heur_dissector_list("eth_esp", &heur_subdissector_list);
+
+		dissector_add("ethertype", ETHERTYPE_ETH_ESP, eth_esp_handle);
 
 		inited = TRUE;
 	}

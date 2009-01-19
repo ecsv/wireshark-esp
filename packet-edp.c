@@ -22,6 +22,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -34,39 +35,28 @@
 #define ETHERTYPE_ETH_EDP            0x8889
 #endif
 
-/* forward reference */
-void proto_register_eth_edp(void);
-void proto_reg_handoff_eth_edp(void);
-
-extern int proto_eth_edp;
-
-/* UDP structs and definitions */
+/* EDP structs and definitions */
 typedef struct _e_eth_edphdr {
 	guint16 eh_dport;
 	guint16 eh_sport;
 	guint16 eh_len;
 } e_eth_edphdr;
 
-void dissect_eth_edp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree);
-
-int proto_eth_edp = -1;
-static dissector_handle_t eth_edp_handle;
-
-static int eth_edp_tap = -1;
-static int eth_edp_follow_tap = -1;
-
-static heur_dissector_list_t heur_subdissector_list;
-
+/* trees */
 static gint ett_eth_edp = -1;
 
+/* hfs */
 static int hf_eth_edp_srcport = -1;
 static int hf_eth_edp_dstport = -1;
 static int hf_eth_edp_len = -1;
 static int hf_eth_edp_ctype = -1;
-static dissector_handle_t data_handle;
 
-static gboolean try_heuristic_first = FALSE;
+/* forward reference */
+void proto_register_eth_edp(void);
+void proto_reg_handoff_eth_edp(void);
+static dissector_handle_t eth_edp_handle;
 
+/* flags */
 static const value_string packettypenames[] = {
 	{ 0, "EDP_CMSG_START" },
 	{ 1, "EDP_ECHO_REQUEST" },
@@ -75,7 +65,22 @@ static const value_string packettypenames[] = {
 	{ 0, NULL }
 };
 
-void dissect_eth_edp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
+/* supported packet dissectors */
+static void dissect_eth_edp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree);
+
+/* other dissectors */
+static dissector_handle_t data_handle;
+
+static int proto_eth_edp_plugin = -1;
+
+/* tap */
+static int eth_edp_tap = -1;
+static int eth_edp_follow_tap = -1;
+
+static heur_dissector_list_t heur_subdissector_list;
+static gboolean try_heuristic_first = FALSE;
+
+static void dissect_eth_edp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 {
 	e_eth_edphdr *eth_edph;
 	tvbuff_t *next_tvb;
@@ -115,8 +120,10 @@ void dissect_eth_edp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 		proto_item *ti = NULL;
 		proto_tree *eth_edp_tree = NULL;
 
-		ti = proto_tree_add_item(tree, proto_eth_edp, tvb, 0, -1, FALSE);
+		ti = proto_tree_add_item(tree, proto_eth_edp_plugin, tvb, 0, -1, FALSE);
 		eth_edp_tree = proto_item_add_subtree(ti, ett_eth_edp);
+
+		/* items */
 		proto_tree_add_item(eth_edp_tree, hf_eth_edp_dstport, tvb, offset, 2, FALSE);
 		offset += 2;
 
@@ -196,23 +203,21 @@ void proto_register_eth_edp(void)
 		&ett_eth_edp
 	};
 
-	if (proto_eth_edp == -1) {
-		module_t *eth_edp_module;
-		proto_eth_edp = proto_register_protocol(
-		                        "Ethernet Datagram Protocol",
-		                        "ETH_EDP",          /* short name */
-		                        "eth_edp"           /* abbrev */
-		                );
-		proto_register_subtree_array(ett, array_length(ett));
-		proto_register_field_array(proto_eth_edp, hf_eth_edp, array_length(hf_eth_edp));
+	module_t *eth_edp_module;
+	proto_eth_edp_plugin = proto_register_protocol(
+	                        "Ethernet Datagram Protocol",
+	                        "ETH_EDP",          /* short name */
+	                        "eth_edp"           /* abbrev */
+	                );
+	proto_register_subtree_array(ett, array_length(ett));
+	proto_register_field_array(proto_eth_edp_plugin, hf_eth_edp, array_length(hf_eth_edp));
 
-		/* Register configuration preferences */
-		eth_edp_module = prefs_register_protocol(proto_eth_edp, NULL);
-		prefs_register_bool_preference(eth_edp_module, "try_heuristic_first",
-		                               "Try heuristic sub-dissectors first",
-		                               "Try to decode a packet using an heuristic sub-dissector before using a data-dissector",
-		                               &try_heuristic_first);
-	}
+	/* Register configuration preferences */
+	eth_edp_module = prefs_register_protocol(proto_eth_edp_plugin, NULL);
+	prefs_register_bool_preference(eth_edp_module, "try_heuristic_first",
+	                               "Try heuristic sub-dissectors first",
+	                               "Try to decode a packet using an heuristic sub-dissector before using a data-dissector",
+	                               &try_heuristic_first);
 }
 
 void proto_reg_handoff_eth_edp(void)
@@ -220,13 +225,16 @@ void proto_reg_handoff_eth_edp(void)
 	static gboolean inited = FALSE;
 
 	if (!inited) {
-		eth_edp_handle = create_dissector_handle(dissect_eth_edp, proto_eth_edp);
-		dissector_add("ethertype", ETHERTYPE_ETH_EDP, eth_edp_handle);
-		register_heur_dissector_list("eth_edp", &heur_subdissector_list);
+		eth_edp_handle = create_dissector_handle(dissect_eth_edp, proto_eth_edp_plugin);
 
 		data_handle = find_dissector("data");
+
 		eth_edp_tap = register_tap("eth_edp");
 		eth_edp_follow_tap = register_tap("eth_edp_follow");
+
+		register_heur_dissector_list("eth_edp", &heur_subdissector_list);
+
+		dissector_add("ethertype", ETHERTYPE_ETH_EDP, eth_edp_handle);
 
 		inited = TRUE;
 	}
