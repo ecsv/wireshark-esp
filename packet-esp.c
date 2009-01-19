@@ -44,6 +44,7 @@ typedef struct _e_eth_esphdr {
 	guint16 eh_len;     /**< data length */
 	guint8 eh_flags;    /**< esp flags */
 } e_eth_esphdr;
+#define ETH_ESP_PACKET_SIZE 11
 
 #define EH_SYN  0x01
 #define EH_ACK  0x02
@@ -133,7 +134,7 @@ static void dissect_eth_esp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 		proto_item *ti = NULL, *tf;
 		proto_tree *eth_esp_tree = NULL, *field_tree = NULL;
 
-		ti = proto_tree_add_item(tree, proto_eth_esp_plugin, tvb, 0, -1, FALSE);
+		ti = proto_tree_add_item(tree, proto_eth_esp_plugin, tvb, 0, ETH_ESP_PACKET_SIZE, FALSE);
 		eth_esp_tree = proto_item_add_subtree(ti, ett_eth_esp);
 
 		/* items */
