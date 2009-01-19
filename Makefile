@@ -17,6 +17,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+ifneq ($(findstring $(MAKEFLAGS),s),s)
+ifndef V
+	Q_CC = @echo '   ' CC $@;
+	Q_LD = @echo '   ' LD $@;
+	export Q_CC
+	export Q_LD
+endif
+endif
+
 WIRESHARK_INCLUDE_PATH = /usr/include/wireshark/
 WIRESHARK_LIBRARY_PATH = /usr/lib/wireshark/
 
@@ -41,10 +50,10 @@ LDFLAGS += -Wl,--export-dynamic
 all: $(PLUGIN)
 
 $(PLUGIN): $(OBJS)
-	$(CC) -shared $(OBJS) $(LDFLAGS) $(EXTRA_LDFLAGS) -Wl,-soname -Wl,$(PLUGIN).so -o $@
+	$(Q_LD)$(CC) -shared $(OBJS) $(LDFLAGS) $(EXTRA_LDFLAGS) -Wl,-soname -Wl,$(PLUGIN).so -o $@
 
 %.o : %.c
-	$(CC) -c $(CFLAGS) $(EXTRA_FLAGS) $< -o $@
+	$(Q_CC)$(CC) -c $(CFLAGS) $(EXTRA_FLAGS) $< -o $@
 
 install: $(PLUGIN)
 	install -d $(PLUGIN_DIR)
