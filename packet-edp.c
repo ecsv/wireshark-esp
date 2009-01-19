@@ -81,6 +81,8 @@ static int eth_edp_follow_tap = -1;
 static heur_dissector_list_t heur_subdissector_list;
 static gboolean try_heuristic_first = FALSE;
 
+static unsigned int eth_edp_ethertype = ETHERTYPE_ETH_EDP;
+
 static void dissect_eth_edp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 {
 	e_eth_edphdr *eth_edph;
@@ -219,11 +221,17 @@ void proto_register_eth_edp(void)
 	                               "Try heuristic sub-dissectors first",
 	                               "Try to decode a packet using an heuristic sub-dissector before using a data-dissector",
 	                               &try_heuristic_first);
+
+	prefs_register_uint_preference(eth_edp_module, "ethertype",
+	                               "Ethertype",
+	                               "Ethertype used to indicate Ethernet Datagram Protocol packet.",
+	                               16, &eth_edp_ethertype);
 }
 
 void proto_reg_handoff_eth_edp(void)
 {
 	static gboolean inited = FALSE;
+	static unsigned int old_eth_edp_ethertype;
 
 	if (!inited) {
 		eth_edp_handle = create_dissector_handle(dissect_eth_edp, proto_eth_edp_plugin);
@@ -235,8 +243,11 @@ void proto_reg_handoff_eth_edp(void)
 
 		register_heur_dissector_list("eth_edp", &heur_subdissector_list);
 
-		dissector_add("ethertype", ETHERTYPE_ETH_EDP, eth_edp_handle);
-
 		inited = TRUE;
+	} else {
+		dissector_delete("ethertype", old_eth_edp_ethertype, eth_edp_handle);
 	}
+
+	old_eth_edp_ethertype = eth_edp_ethertype;
+	dissector_add("ethertype", eth_edp_ethertype, eth_edp_handle);
 }
