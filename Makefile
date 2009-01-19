@@ -17,7 +17,7 @@ CFLAGS = -Wall
 
 WIRESHARK_LDFLAGS = -L$(WIRESHARK_LIBRARY_PATH) -lwireshark
 EXTRA_LDFLAGS = $(WIRESHARK_LDFLAGS) `pkg-config --libs glib-2.0`
-LDFLAGS = -Wl,--export-dynamic
+LDFLAGS += -Wl,--export-dynamic
 
 all: $(PLUGIN)
 
