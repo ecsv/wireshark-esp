@@ -40,18 +40,18 @@ PLUGIN_DIR = $(HOME)/.wireshark/plugins
 PLUGIN_INSTALL = $(PLUGIN_DIR)/$(PLUGIN)
 
 WIRESHARK_FLAGS = -DHAVE_CONFIG_H -I$(WIRESHARK_INCLUDE_PATH)
-CFLAGS = -Wall -D_U_= $(WIRESHARK_FLAGS) `pkg-config --cflags glib-2.0` -fPIC -DPIC
+EXTRA_CFLAGS = -Wall -D_U_= $(WIRESHARK_FLAGS) `pkg-config --cflags glib-2.0` -fPIC -DPIC
 
 WIRESHARK_LDFLAGS = -L$(WIRESHARK_LIBRARY_PATH) -lwireshark
-LDFLAGS += -Wl,--export-dynamic $(WIRESHARK_LDFLAGS) `pkg-config --libs glib-2.0`
+EXTRA_LDFLAGS = -Wl,--export-dynamic $(WIRESHARK_LDFLAGS) `pkg-config --libs glib-2.0`
 
 all: $(PLUGIN)
 
 $(PLUGIN): $(OBJS)
-	$(Q_LD)$(CC) -shared $(OBJS) $(LDFLAGS) -Wl,-soname -Wl,$(PLUGIN).so -o $@
+	$(Q_LD)$(CC) -shared $(OBJS) $(LDFLAGS) $(EXTRA_LDFLAGS) -Wl,-soname -Wl,$(PLUGIN).so -o $@
 
 %.o : %.c
-	$(Q_CC)$(CC) -c $(CFLAGS) $< -o $@
+	$(Q_CC)$(CC) -c $(CFLAGS) $(EXTRA_CFLAGS) $< -o $@
 
 install: $(PLUGIN)
 	install -d $(PLUGIN_DIR)
