@@ -1,0 +1,10 @@
+Format-Specification: http://wiki.debian.org/Proposals/CopyrightFormat
+Upstream-Name: wireshark-esp
+Upstream-Source: http://gitorious.org/projects/wireshark-esp
+Upstream-Maintainer: Sven Eckelmann <sven.eckelmann@gmx.de>
+
+Files: *
+Copyright: Copyright 2008-2009, Sven Eckelmann <sven.eckelmann@gmx.de>
+License: GPL-2+
+ On Debian systems the full text of the GNU General Public License can be found
+ in the `/usr/share/common-licenses/GPL-2' file.

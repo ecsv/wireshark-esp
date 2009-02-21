@@ -1,0 +1,7 @@
+#!/usr/bin/make -f
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/makefile.mk
+
+DEB_MAKE_INSTALL_TARGET := install PLUGIN_DIR=$(CURDIR)/debian/tmp/usr/lib/wireshark/plugins
+DEB_SHLIBDEPS_INCLUDE := /usr/lib/wireshark/

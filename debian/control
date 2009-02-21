@@ -1,0 +1,19 @@
+Source: wireshark-esp
+Section: net
+Priority: extra
+Maintainer: Sven Eckelmann <sven.eckelmann@gmx.de>
+Build-Depends: debhelper (>= 7), cdbs, wireshark-dev, wireshark-common
+Standards-Version: 3.8.0
+Homepage: http://gitorious.org/projects/wireshark-esp
+Vcs-Git: git://gitorious.org/wireshark-esp/mainline.git
+Vcs-Browser: http://gitorious.org/projects/wireshark-esp/repos/mainline/trees/debian
+
+Package: wireshark-esp
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Wireshark dissector plugin for EDP and ESP
+ Wireshark is a network traffic analyzer, or "sniffer", for Unix and Unix-like
+ operating systems. A sniffer is a tool used to capture packets off the wire.
+ Wireshark decodes numerous protocols (too many to list).
+ .
+ This package provides plugin to dissect EDP and ESP ethernet frames.
