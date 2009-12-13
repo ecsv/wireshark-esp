@@ -106,11 +106,11 @@ static void dissect_eth_edp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 		col_clear(pinfo->cinfo, COL_INFO);
 
 		if (eth_edph->eh_sport == 0) {
-			uint8_t ctype = tvb_get_guint8(tvb, 6);
+			guint8 ctype = tvb_get_guint8(tvb, 6);
 			col_append_fstr(pinfo->cinfo, COL_INFO, "KERNEL > %u [%s]", eth_edph->eh_dport,
 			                val_to_str(ctype, packettypenames, "Unknown (0x%02x)"));
 		} else if (eth_edph->eh_dport == 0) {
-			uint8_t ctype = tvb_get_guint8(tvb, 6);
+			guint8 ctype = tvb_get_guint8(tvb, 6);
 			col_append_fstr(pinfo->cinfo, COL_INFO, "%u > KERNEL [%s]", eth_edph->eh_sport,
 			                val_to_str(ctype, packettypenames, "Unknown (0x%02x)"));
 		} else {
@@ -137,7 +137,7 @@ static void dissect_eth_edp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 		offset += 2;
 
 		if (eth_edph->eh_dport == 0 || eth_edph->eh_sport == 0) {
-			uint8_t ctype = tvb_get_guint8(tvb, 6);
+			guint8 ctype = tvb_get_guint8(tvb, 6);
 			proto_tree_add_uint_format(eth_edp_tree, hf_eth_edp_ctype, tvb, offset, 1, ctype,
 			                           "CType: %s (%u)",
 			                           val_to_str(ctype, packettypenames, "Unknown (0x%02x)"), ctype);
