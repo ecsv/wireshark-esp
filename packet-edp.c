@@ -1,6 +1,6 @@
 /* packet-bat-gw.c
  * Routines for Ethernet Datagram Protocol dissection
- * Copyright 2008-2009  Sven Eckelmann <sven.eckelmann@gmx.de>
+ * Copyright 2008-2009  Sven Eckelmann <sven@narfation.org>
  *
  * $Id$
  *
